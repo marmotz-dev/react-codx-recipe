@@ -1,0 +1,116 @@
+description: "Set up a React project with Tailwind CSS, ESLint, and Prettier"
+author: "Marmotz"
+
+steps:
+  - action:
+      type: "message"
+      content: "Welcome to the React Installation Assistant with Tailwind CSS!"
+      style: "header"
+
+  - name: "Enter Project Name"
+    action:
+      type: "prompt"
+      promptType: "text"
+      message: "Project name:"
+      defaultValue: "my-react-app"
+    variable: "projectName"
+
+  - name: "Select additional librairies"
+    action:
+      type: "prompt"
+      promptType: "checkbox"
+      message: "What additional lib do you want to install in your new project?"
+      choices:
+        eslint-prettier: "ESLint/Prettier"
+      defaultValues:
+        - eslint-prettier
+    variable: "additionalLibs"
+
+  - name: "Create React Project"
+    action:
+      type: "package"
+      operation: "run"
+      package: "create-react-router@latest"
+      options: "--no-git-init --package-manager {$PACKAGE_MANAGER} {projectName.answer}"
+    onSuccess:
+      - action:
+          type: "message"
+          content: "React project created successfully!"
+          style: "success"
+    onFailure:
+      - action:
+          type: "message"
+          content: "Failed to create the React project."
+          style: "error"
+
+  - name: "Change Directory"
+    action:
+      type: "changeDir"
+      path: "{projectName.answer}"
+
+  - name: "Install ESLint and Prettier"
+    condition: '"eslint-prettier" in additionalLibs.answers'
+    action:
+      type: "package"
+      operation: "install"
+      packages:
+        - "eslint"
+        - "eslint-plugin-react"
+        - "eslint-config-prettier"
+        - "prettier"
+      dev: true
+    onSuccess:
+      - action:
+          type: "message"
+          content: "ESLint and Prettier installed successfully!"
+          style: "success"
+
+  - name: "Create ESLint Configuration"
+    condition: '"eslint-prettier" in additionalLibs.answers'
+    action:
+      type: "fileSystem"
+      operation: "create"
+      path: ".eslintrc.json"
+      content: |
+        {
+          "extends": [
+            "react-app",
+            "prettier"
+          ],
+          "plugins": ["react"],
+          "rules": {
+            "react/jsx-uses-react": "error",
+            "react/jsx-uses-vars": "error"
+          }
+        }
+
+  - name: "Create Prettier Configuration"
+    condition: '"eslint-prettier" in additionalLibs.answers'
+    action:
+      type: "fileSystem"
+      operation: "create"
+      path: ".prettierrc"
+      content: |
+        {
+          "semi": true,
+          "singleQuote": true,
+          "tabWidth": 2,
+          "trailingComma": "es5"
+        }
+
+  - name: "Conclusion Message"
+    action:
+      type: "message"
+      content: |
+        🎉 Installation completed successfully!
+
+        Your project is configured with:
+        - React
+        - Tailwind CSS
+        {{if "eslint-prettier" in additionalLibs.answers}}- ESLint and Prettier{{/if}}
+
+        To start your application:
+        $ cd {$RELATIVE_PROJECT_DIRECTORY}
+        $ {$PACKAGE_MANAGER} run build
+        $ {$PACKAGE_MANAGER} run start
+      style: "success"
